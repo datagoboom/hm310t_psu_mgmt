@@ -1,10 +1,8 @@
-
-
-
 import { Box, IconButton, TextField, Tooltip, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew'
 import { useState } from 'react'
 import { useApi } from '../contexts/ApiContext'
+import { useSettings } from '../contexts/SettingsContext'
 
 export default function QuickBar({ children }) {
   const { 
@@ -15,31 +13,32 @@ export default function QuickBar({ children }) {
     setOutput, 
     writeRegister 
   } = useApi()
+
+  const { updateGlobalGraphSettings, globalGraphSettings } = useSettings()
   
-  const [voltage, setVoltage] = useState('')
-  const [current, setCurrent] = useState('')
-  const [outputEnabled, setOutputEnabled] = useState(false)
+  const timeRangeOptions = [
+    { value: 10000, label: '10s' },
+    { value: 30000, label: '30s' },
+    { value: 60000, label: '1m' },
+    { value: 300000, label: '5m' },
+    { value: 600000, label: '10m' },
+    { value: 1800000, label: '30m' },
+    { value: 3600000, label: '1h' }
+  ]
 
-  const handlePowerToggle = async () => {
-    if (!isConnected) return
-    const newState = !outputEnabled
-    const result = await setOutput(newState)
-    if (result.success) {
-      setOutputEnabled(newState)
-    }
-  }
+  const resolutionOptions = [
+    { value: 100, label: '100ms' },
+    { value: 500, label: '500ms' },
+    { value: 1000, label: '1s' }
+  ]
 
-  const handleVoltageSet = async () => {
-    if (!isConnected || !voltage) return
-    const value = Math.round(parseFloat(voltage) * 100)
-    await writeRegister(0x30, value)
-  }
+  const handleTimeRangeChange = (event) => {
+    updateGlobalGraphSettings({ timeRange: event.target.value });
+  };
 
-  const handleCurrentSet = async () => {
-    if (!isConnected || !current) return
-    const value = Math.round(parseFloat(current) * 1000)
-    await writeRegister(0x31, value)
-  }
+  const handleResolutionChange = (event) => {
+    updateGlobalGraphSettings({ resolution: event.target.value });
+  };
 
   return (
     <Box sx={{ 
@@ -50,7 +49,6 @@ export default function QuickBar({ children }) {
       borderBottom: 1,
       borderColor: 'divider'
     }}>
-      
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel id="port-select-label">Serial Port</InputLabel>
@@ -72,12 +70,54 @@ export default function QuickBar({ children }) {
             ))}
           </Select>
         </FormControl>
+
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          borderLeft: 1,
+          borderColor: 'divider',
+          pl: 2
+        }}>
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <InputLabel id="time-range-label">Time Span</InputLabel>
+            <Select
+              labelId="time-range-label"
+              id="time-range-select"
+              value={globalGraphSettings?.timeRange || 60000}
+              label="Time Span"
+              onChange={handleTimeRangeChange}
+            >
+              {timeRangeOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <InputLabel id="resolution-label">Resolution</InputLabel>
+            <Select
+              labelId="resolution-label"
+              id="resolution-select"
+              value={globalGraphSettings?.resolution || 1000}
+              label="Resolution"
+              onChange={handleResolutionChange}
+            >
+              {resolutionOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
         {children}
       </Box>
 
-      
       <Box sx={{ flex: 1 }} />
-
     </Box>
   )
 }

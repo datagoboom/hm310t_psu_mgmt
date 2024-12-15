@@ -14,7 +14,7 @@ const colorIndices = {
 
 export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
   const theme = useTheme()
-  const { graphPreferences, updateGraphPreference } = useSettings()
+  const { graphPreferences, updateGraphPreference, globalGraphSettings } = useSettings()
   
   const preferences = graphPreferences[dataKey] || {
     type: 'line',
@@ -37,10 +37,21 @@ export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
   };
 
   const filteredData = useMemo(() => {
-    if (!data || data.length === 0) return []
-    const cutoffTime = Date.now() - preferences.timeRange
-    return data.filter(d => d.timestamp >= cutoffTime)
-  }, [data, preferences.timeRange])
+    if (!data || data.length === 0) return [];
+    
+    const cutoffTime = Date.now() - globalGraphSettings.timeRange;
+    const filtered = data.filter(d => d.timestamp >= cutoffTime);
+    
+    // Apply resolution filtering
+    if (filtered.length > 1) {
+      return filtered.filter((d, i, arr) => {
+        if (i === 0) return true;
+        return d.timestamp - arr[i-1].timestamp >= globalGraphSettings.resolution;
+      });
+    }
+    
+    return filtered;
+  }, [data, globalGraphSettings.timeRange, globalGraphSettings.resolution]);
 
   
   const yDomain = useMemo(() => {
