@@ -1,40 +1,46 @@
-
-
-
-import { useRef, useMemo, useState } from 'react'
+import { useRef, useMemo } from 'react'
 import { Box, Typography, CircularProgress } from '@mui/material'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts'
 import { useTheme } from '@mui/material/styles'
 import GraphControls from './GraphControls'
-
+import { useSettings } from '../contexts/SettingsContext'
 
 const colorIndices = {
   voltage: 0,
   current: 1,
-  power: 2
+  power: 2,
+  temperature: 3
 }
 
 export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
-  const containerRef = useRef(null)
   const theme = useTheme()
-  const [graphType, setGraphType] = useState('line')
-  const [timeRange, setTimeRange] = useState(300000) 
-
+  const { graphPreferences, updateGraphPreference } = useSettings()
   
-  const filteredData = useMemo(() => {
-    if (!data || data.length === 0) return []
-    const cutoffTime = Date.now() - timeRange
-    return data.filter(d => d.timestamp >= cutoffTime)
-  }, [data, timeRange])
+  const preferences = graphPreferences[dataKey] || {
+    type: 'line',
+    timeRange: 60000
+  }
 
-  
   const colors = useMemo(() => ({
-    primary: theme.graphs[colorIndices[dataKey]], 
-    secondary: theme.palette.secondary.main,
+    primary: theme.graphs[colorIndices[dataKey] || 0],
     background: theme.palette.background.paper,
     text: theme.palette.text.primary,
     grid: theme.palette.divider
   }), [theme, dataKey])
+
+  const handleTypeChange = (newType) => {
+    updateGraphPreference(dataKey, { type: newType });
+  };
+
+  const handleTimeRangeChange = (newRange) => {
+    updateGraphPreference(dataKey, { timeRange: newRange });
+  };
+
+  const filteredData = useMemo(() => {
+    if (!data || data.length === 0) return []
+    const cutoffTime = Date.now() - preferences.timeRange
+    return data.filter(d => d.timestamp >= cutoffTime)
+  }, [data, preferences.timeRange])
 
   
   const yDomain = useMemo(() => {
@@ -93,7 +99,7 @@ export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
       tick: { fill: colors.text }
     }
 
-    switch (graphType) {
+    switch (preferences.type) {
       case 'bar':
         return (
           <BarChart {...commonProps}>
@@ -124,7 +130,42 @@ export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
           </BarChart>
         )
       
-      default: 
+      case 'area':
+        return (
+          <AreaChart {...commonProps}>
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
+            <XAxis 
+              {...commonAxisProps}
+              dataKey="timestamp" 
+              tickFormatter={(time) => new Date(time).toLocaleTimeString()}
+              interval="preserveStartEnd"
+              minTickGap={50}
+            />
+            <YAxis 
+              {...commonAxisProps}
+              domain={yDomain}
+              tickFormatter={formatValue}
+              width={60}
+            />
+            <Tooltip 
+              labelFormatter={(time) => new Date(time).toLocaleString()}
+              formatter={(value) => [formatValue(value) + unit, dataKey]}
+              contentStyle={{ backgroundColor: colors.background }}
+            />
+            <Area
+              type="monotone"
+              dataKey={dataKey}
+              stroke={colors.primary}
+              fill={colors.primary}
+              fillOpacity={0.3}
+              isAnimationActive={false}
+              strokeWidth={2}
+              connectNulls
+            />
+          </AreaChart>
+        )
+      
+      default:
         return (
           <LineChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
@@ -147,7 +188,7 @@ export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
               contentStyle={{ backgroundColor: colors.background }}
             />
             <Line 
-              type={graphType}
+              type="monotone"
               dataKey={dataKey} 
               stroke={colors.primary}
               fill={colors.primary}
@@ -165,16 +206,29 @@ export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
   const showLoading = isCapturing && (!data || data.length === 0)
 
   return (
-    <Box ref={containerRef} sx={{ width: '100%', height: '100%', p: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="h6">{title}</Typography>
-        <GraphControls 
-          type={graphType} 
-          onTypeChange={setGraphType}
-          timeRange={timeRange}
-          onTimeRangeChange={setTimeRange}
+    <Box sx={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      padding: 1,
+      gap: 1
+    }}>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+        <GraphControls
+          type={preferences.type}
+          onTypeChange={handleTypeChange}
+          timeRange={preferences.timeRange}
+          onTimeRangeChange={handleTimeRangeChange}
         />
       </Box>
+      
       <Box sx={{ 
         width: '100%', 
         height: 'calc(100% - 50px)',
@@ -201,5 +255,5 @@ export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
         )}
       </Box>
     </Box>
-  )
+  );
 }

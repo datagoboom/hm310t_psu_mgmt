@@ -1,7 +1,7 @@
 import { ToggleButtonGroup, ToggleButton, Box } from '@mui/material'
 import ShowChartIcon from '@mui/icons-material/ShowChart'
 import BarChartIcon from '@mui/icons-material/BarChart'
-import TimelapseIcon from '@mui/icons-material/Timelapse'
+import TimelineIcon from '@mui/icons-material/Timeline'
 
 const timeRanges = [
   { value: 60000, label: '1m' },
@@ -15,32 +15,32 @@ export default function GraphControls({ type, onTypeChange, timeRange, onTimeRan
   return (
     <Box sx={{ display: 'flex', gap: 1 }}>
       <ToggleButtonGroup
-        size="small"
-        value={timeRange}
-        exclusive
-        onChange={(e, value) => value && onTimeRangeChange(value)}
-        aria-label="time range"
-      >
-        {timeRanges.map(({ value, label }) => (
-          <ToggleButton key={value} value={value} aria-label={`${label} range`}>
-            {label}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
-
-      <ToggleButtonGroup
-        size="small"
         value={type}
         exclusive
         onChange={(e, value) => value && onTypeChange(value)}
-        aria-label="graph type"
+        size="small"
       >
-        <ToggleButton value="line" aria-label="line graph">
+        <ToggleButton value="line">
           <ShowChartIcon />
         </ToggleButton>
-        <ToggleButton value="bar" aria-label="bar graph">
+        <ToggleButton value="bar">
           <BarChartIcon />
         </ToggleButton>
+        <ToggleButton value="area">
+          <TimelineIcon />
+        </ToggleButton>
+      </ToggleButtonGroup>
+
+      <ToggleButtonGroup
+        value={timeRange}
+        exclusive
+        onChange={(e, value) => value && onTimeRangeChange(value)}
+        size="small"
+      >
+        <ToggleButton value={60000}>1m</ToggleButton>
+        <ToggleButton value={300000}>5m</ToggleButton>
+        <ToggleButton value={900000}>15m</ToggleButton>
+        <ToggleButton value={3600000}>1h</ToggleButton>
       </ToggleButtonGroup>
     </Box>
   )

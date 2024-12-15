@@ -1,6 +1,102 @@
 import { createTheme } from '@mui/material'
 
 const themes = {
+  defaultTheme: {
+    name: 'Default',
+    palette: {
+      mode: 'dark',
+      background: {
+        default: '#263238',
+        paper: '#37474f',
+        sidebar: '#1c2529'
+      },
+      foreground: '#eeffff',
+      primary: '#82aaff',
+      secondary: '#c792ea',
+      error: '#f07178',
+      warning: '#ffcb6b',
+      info: '#89ddff',
+      success: '#c3e88d',
+      graphs: [
+        '#82aaff',
+        '#c792ea',
+        '#ffcb6b',
+        '#c3e88d',
+        '#f07178',
+        '#89ddff'
+      ],
+      divider: '#546e7a',
+      text: {
+        primary: '#eeffff',
+        secondary: '#b0bec5',
+        disabled: '#546e7a'
+      }
+    }
+  },
+  agentOrange: {
+    name: 'Agent Orange',
+    palette: {
+      mode: 'dark',
+      background: {
+        default: '#1a1b26',
+        paper: '#24273a',
+        sidebar: '#16171f'
+      },
+      foreground: '#ff9e64',
+      primary: '#ff9e64',
+      secondary: '#ff9e64',
+      error: '#ff9e64',
+      warning: '#ff9e64',
+      info: '#ff9e64',
+      success: '#ff9e64',
+      graphs: [
+        '#ff9e64',
+        '#ffb584',
+        '#cc7e50',
+        '#ff8b3d',
+        '#ffa778',
+        '#e68a59'
+      ],
+      divider: '#ff9e64',
+      text: {
+        primary: '#ff9e64',
+        secondary: 'rgba(255, 158, 100, 0.7)',
+        disabled: 'rgba(255, 158, 100, 0.5)'
+      }
+    }
+  },
+  dracula: {
+    name: 'Dracula',
+    palette: {
+      mode: 'dark',
+      background: {
+        default: '#282a36',
+        paper: '#44475a',
+        sidebar: '#21222c'
+      },
+      foreground: '#f8f8f2',
+      primary: '#bd93f9',
+      secondary: '#ff79c6',
+      error: '#ff5555',
+      warning: '#ffb86c',
+      info: '#8be9fd',
+      success: '#50fa7b',
+      graphs: [
+        '#bd93f9',
+        '#ff79c6',
+        '#ffb86c',
+        '#50fa7b',
+        '#ff5555',
+        '#8be9fd'
+      ],
+      divider: '#6272a4',
+      text: {
+        primary: '#f8f8f2',
+        secondary: '#6272a4',
+        disabled: '#44475a'
+      }
+    }
+  },
   gruvboxDark: {
     name: 'Gruvbox Dark',
     palette: {
@@ -39,6 +135,38 @@ const themes = {
       success: '#79740e',
       graphs: ['#076678', '#8f3f71', '#b57614', '#79740e', '#9d0006', '#427b58'],
       divider: '#bdae93'
+    }
+  },
+  marshmallow: {
+    name: 'Marshmallow',
+    palette: {
+      mode: 'light',
+      background: {
+        default: '#fff5f7',
+        paper: '#fdf2f8',
+        sidebar: '#fff0f6'
+      },
+      foreground: '#4a5568',
+      primary: '#f0abfc',
+      secondary: '#c4b5fd',
+      error: '#fda4af',
+      warning: '#fcd34d',
+      info: '#7aa2f7',
+      success: '#86efac',
+      graphs: [
+        '#f0abfc',
+        '#c4b5fd',
+        '#fcd34d',
+        '#86efac',
+        '#fda4af',
+        '#7aa2f7'
+      ],
+      divider: '#e2e8f0',
+      text: {
+        primary: '#4a5568',
+        secondary: '#718096',
+        disabled: '#a0aec0'
+      }
     }
   },
   monokaiDark: {
@@ -81,6 +209,70 @@ const themes = {
       divider: '#dcdcdc'
     }
   },
+  nightOwl: {
+    name: 'Night Owl',
+    palette: {
+      mode: 'dark',
+      background: {
+        default: '#011627',
+        paper: '#0b2942',
+        sidebar: '#001122'
+      },
+      foreground: '#d6deeb',
+      primary: '#82aaff',
+      secondary: '#c792ea',
+      error: '#ef5350',
+      warning: '#ffeb95',
+      info: '#7fdbca',
+      success: '#22da6e',
+      graphs: [
+        '#82aaff',
+        '#c792ea',
+        '#ffeb95',
+        '#22da6e',
+        '#ef5350',
+        '#7fdbca'
+      ],
+      divider: '#5f7e97',
+      text: {
+        primary: '#d6deeb',
+        secondary: '#5f7e97',
+        disabled: '#414868'
+      }
+    }
+  },
+  oneDarkPro: {
+    name: 'One Dark Pro',
+    palette: {
+      mode: 'dark',
+      background: {
+        default: '#282c34',
+        paper: '#3e4451',
+        sidebar: '#21252b'
+      },
+      foreground: '#abb2bf',
+      primary: '#61afef',
+      secondary: '#c678dd',
+      error: '#e06c75',
+      warning: '#e5c07b',
+      info: '#56b6c2',
+      success: '#98c379',
+      graphs: [
+        '#61afef',
+        '#c678dd',
+        '#e5c07b',
+        '#98c379',
+        '#e06c75',
+        '#56b6c2'
+      ],
+      divider: '#5c6370',
+      text: {
+        primary: '#abb2bf',
+        secondary: '#5c6370',
+        disabled: '#4b5263'
+      }
+    }
+  },
   solarizedDark: {
     name: 'Solarized Dark',
     palette: {
@@ -121,26 +313,71 @@ const themes = {
       divider: '#93a1a1'
     }
   },
-  defaultTheme: {
-    name: 'Default',
+  tokyoNight: {
+    name: 'Tokyo Night',
     palette: {
-      mode: 'light',
+      mode: 'dark',
       background: {
-        default: '#ffffff',
-        paper: '#f5f5f5',
-        sidebar: '#eeeeee'
+        default: '#1a1b26',
+        paper: '#24283b',
+        sidebar: '#16161e'
       },
-      foreground: '#000000',
-      primary: '#1976d2',
-      secondary: '#9c27b0',
-      error: '#d32f2f',
-      warning: '#ed6c02',
-      info: '#0288d1',
-      success: '#2e7d32',
-      graphs: ['#1976d2', '#9c27b0', '#ed6c02', '#2e7d32', '#d32f2f', '#0288d1'],
-      divider: 'rgba(0, 0, 0, 0.12)'
+      foreground: '#a9b1d6',
+      primary: '#7aa2f7',
+      secondary: '#bb9af7',
+      error: '#f7768e',
+      warning: '#e0af68',
+      info: '#7dcfff',
+      success: '#9ece6a',
+      graphs: [
+        '#7aa2f7',
+        '#bb9af7',
+        '#e0af68',
+        '#9ece6a',
+        '#f7768e',
+        '#7dcfff'
+      ],
+      divider: '#565f89',
+      text: {
+        primary: '#a9b1d6',
+        secondary: '#565f89',
+        disabled: '#414868'
+      }
     }
-  }
+  },
+  tomorrowNightEighties: {
+    name: 'Tomorrow Night Eighties',
+    palette: {
+      mode: 'dark',
+      background: {
+        default: '#2d2d2d',
+        paper: '#393939',
+        sidebar: '#252525'
+      },
+      foreground: '#cccccc',
+      primary: '#6699cc',
+      secondary: '#cc99cc',
+      error: '#f2777a',
+      warning: '#ffcc66',
+      info: '#66cccc',
+      success: '#99cc99',
+      graphs: [
+        '#6699cc',
+        '#cc99cc',
+        '#ffcc66',
+        '#99cc99',
+        '#f2777a',
+        '#66cccc'
+      ],
+      divider: '#999999',
+      text: {
+        primary: '#cccccc',
+        secondary: '#999999',
+        disabled: '#666666'
+      }
+    }
+  },
+  
 }
 
 export const createCustomTheme = (themeName) => {

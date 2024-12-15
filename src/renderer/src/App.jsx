@@ -7,6 +7,7 @@ import { createCustomTheme } from './theme'
 
 import { ApiProvider } from './views/contexts/ApiContext'
 import { HistoryProvider } from './views/contexts/HistoryContext'
+import { SettingsProvider } from './views/contexts/SettingsContext'
 
 
 import Dashboard from './views/Dashboard'
@@ -44,22 +45,24 @@ function App() {
 
   return (
     <Router>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <ApiProvider>
-          <HistoryProvider>
-            <Box sx={{ display: 'flex', width: '100vw', height: '100vh' }}>
-              <Sidebar 
-                currentView={currentView}
-                onViewChange={setCurrentView}
-              />
-              <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                {renderView()}
+      <SettingsProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <ApiProvider>
+            <HistoryProvider>
+              <Box sx={{ display: 'flex', width: '100vw', height: '100vh' }}>
+                <Sidebar 
+                  currentView={currentView}
+                  onViewChange={setCurrentView}
+                />
+                <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                  {renderView()}
+                </Box>
               </Box>
-            </Box>
-          </HistoryProvider>
-        </ApiProvider>
-      </ThemeProvider>
+            </HistoryProvider>
+          </ApiProvider>
+        </ThemeProvider>
+      </SettingsProvider>
     </Router>
   )
 }

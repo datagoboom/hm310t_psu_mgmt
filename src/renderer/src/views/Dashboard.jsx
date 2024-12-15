@@ -162,8 +162,8 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
       bgcolor: 'background.default'
     }}>
       <QuickBar 
-        onThemeChange={onThemeChange} 
         currentTheme={currentTheme}
+        onThemeChange={onThemeChange}
       >
         <CaptureControls
           isCapturing={isCapturing}
