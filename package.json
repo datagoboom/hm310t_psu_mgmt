@@ -1,10 +1,10 @@
 {
-  "name": "hanmtatek_psu_mgmt",
+  "name": "psu_mgmt",
   "version": "1.0.0",
-  "description": "An Electron application with React",
+  "description": "GUI for PSU Management",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "datagoboom",
+  "homepage": "https://github.com/datagoboom/psu_mgmt",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
