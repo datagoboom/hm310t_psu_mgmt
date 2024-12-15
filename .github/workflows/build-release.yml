@@ -1,0 +1,99 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - 'release/*'
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          
+      - name: Install system dependencies (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev
+
+      - name: Build application
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            npm run build:win
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+            npm run build:mac
+          else
+            npm run build:linux
+          fi
+        shell: bash
+
+      - name: Upload Windows artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-builds
+          path: |
+            dist/*.exe
+            dist/latest.yml
+
+      - name: Upload macOS artifacts
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-builds
+          path: |
+            dist/*.dmg
+            dist/latest-mac.yml
+
+      - name: Upload Linux artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/latest-linux.yml
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/heads/release/')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get version from branch name
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: Release v${{ steps.get_version.outputs.VERSION }}
+          draft: true
+          files: |
+            artifacts/**/*
