@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react'
 import { ThemeProvider, CssBaseline, Box } from '@mui/material'
 import { BrowserRouter as Router } from 'react-router-dom'
-import { ApiProvider } from './views/contexts/ApiContext'
 import Sidebar from './views/components/Sidebar'
 import { createCustomTheme } from './theme'
 
-// Views
+
+import { ApiProvider } from './views/contexts/ApiContext'
+import { HistoryProvider } from './views/contexts/HistoryContext'
+
+
 import Dashboard from './views/Dashboard'
 import CommandCenter from './views/CommandCenter'
 import Settings from './views/Settings'
@@ -44,15 +47,17 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <ApiProvider>
-          <Box sx={{ display: 'flex', width: '100vw', height: '100vh' }}>
-            <Sidebar 
-              currentView={currentView}
-              onViewChange={setCurrentView}
-            />
-            <Box sx={{ flex: 1, overflow: 'hidden' }}>
-              {renderView()}
+          <HistoryProvider>
+            <Box sx={{ display: 'flex', width: '100vw', height: '100vh' }}>
+              <Sidebar 
+                currentView={currentView}
+                onViewChange={setCurrentView}
+              />
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                {renderView()}
+              </Box>
             </Box>
-          </Box>
+          </HistoryProvider>
         </ApiProvider>
       </ThemeProvider>
     </Router>

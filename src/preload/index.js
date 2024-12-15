@@ -13,7 +13,10 @@ contextBridge.exposeInMainWorld('electron', {
         'psu:setOutput',
         'psu:sendCommand',
         'psu:calculateCRC',
-        'psu:isConnected'
+        'psu:isConnected',
+        'capture:start',
+        'capture:stop',
+        'capture:getData',
       ]
       if (validChannels.includes(channel)) {
         return ipcRenderer.invoke(channel, ...args)

@@ -4,8 +4,8 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { PowerSupplyController } from './psu'
 const { SerialPort } = require('serialport')
+import { CaptureDatabase } from './database'
 
-// CRC Utilities
 function calculateModbusCRC(buffer) {
   let crc = 0xFFFF;
   
@@ -22,19 +22,19 @@ function calculateModbusCRC(buffer) {
     }
   }
   
-  // Convert to two bytes
+  
   const crcBytes = Buffer.alloc(2);
-  crcBytes[0] = crc & 0xFF;         // Low byte
-  crcBytes[1] = (crc >> 8) & 0xFF;  // High byte
+  crcBytes[0] = crc & 0xFF;         
+  crcBytes[1] = (crc >> 8) & 0xFF;  
   
   return crcBytes;
 }
 
 function hexStringToBuffer(hexString) {
-  // Remove spaces and convert to uppercase
+  
   const cleanHex = hexString.replace(/\s+/g, '').toUpperCase();
   
-  // Create buffer from hex string
+  
   const buffer = Buffer.alloc(cleanHex.length / 2);
   
   for (let i = 0; i < cleanHex.length; i += 2) {
@@ -52,20 +52,22 @@ function bufferToHexString(buffer) {
 
 let psu = null
 let mainWindow = null
+let captureDb = null
+let captureInterval = null
 
 const setupIPCHandlers = () => {
-  // Get available serial ports
+  
   ipcMain.handle('psu:getPorts', async () => {
     try {
       const ports = await SerialPort.list()
-      // Filter for common serial port patterns
+      
       const commonPorts = ports.filter(port => {
         const path = port.path.toLowerCase()
         return (
-          path.includes('tty.usbserial') ||  // Mac OS X
-          path.includes('ttyusb') ||         // Linux
-          path.includes('ttyacm') ||         // Linux
-          path.includes('com')               // Windows
+          path.includes('tty.usbserial') ||  
+          path.includes('ttyusb') ||         
+          path.includes('ttyacm') ||         
+          path.includes('com')               
         )
       })
       return { 
@@ -82,7 +84,7 @@ const setupIPCHandlers = () => {
     }
   })
 
-  // Connection management
+  
 
   ipcMain.handle('psu:isConnected', () => {
     return {
@@ -97,7 +99,7 @@ const setupIPCHandlers = () => {
         psu = new PowerSupplyController()
       }
       const result = await psu.connect(port)
-      console.log('Connection result:', result)  // Debug log
+      console.log('Connection result:', result)  
       return result
     } catch (error) {
       console.error('Error connecting:', error)
@@ -119,7 +121,7 @@ const setupIPCHandlers = () => {
     }
   })
 
-  // PSU Controls
+  
   ipcMain.handle('psu:getStatus', async () => {
     try {
       if (!psu) return { success: false, error: 'PSU not connected' }
@@ -204,10 +206,59 @@ const setupIPCHandlers = () => {
       }
     }
   })
+
+  ipcMain.handle('capture:start', async () => {
+    if (!psu) return { success: false, error: 'PSU not connected' };
+    if (!captureDb) {
+      captureDb = new CaptureDatabase();
+      await captureDb.initialize();
+    }
+
+    
+    captureInterval = setInterval(async () => {
+      try {
+        const status = await psu.getStatus();
+        if (status.success) {
+          await captureDb.addMeasurement({
+            timestamp: Date.now(),
+            ...status
+          });
+        }
+      } catch (error) {
+        console.error('Capture error:', error);
+      }
+    }, 1000); 
+
+    return { success: true };
+  });
+
+  ipcMain.handle('capture:stop', async () => {
+    if (captureInterval) {
+      clearInterval(captureInterval);
+      captureInterval = null;
+    }
+    return { success: true };
+  });
+
+  ipcMain.handle('capture:getData', async (_, since) => {
+    if (!captureDb) return { success: false, error: 'Capture not initialized' };
+    try {
+      const measurements = await captureDb.getRecentMeasurements(since);
+      return { success: true, data: measurements };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('capture:clear', async () => {
+    if (!captureDb) return { success: false, error: 'Capture not initialized' };
+    await captureDb.clearCaptures();
+    return { success: true };
+  });
 }
 
 function createWindow() {
-  // Create the browser window.
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -244,7 +295,7 @@ function createWindow() {
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
 
-  // Set up IPC handlers before creating the window
+  
   setupIPCHandlers()
   
   createWindow()
@@ -260,7 +311,7 @@ app.on('window-all-closed', () => {
   }
 })
 
-// Cleanup on quit
+
 app.on('before-quit', async () => {
   if (psu) {
     await psu.disconnect()

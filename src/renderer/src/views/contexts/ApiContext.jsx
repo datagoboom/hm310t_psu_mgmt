@@ -9,7 +9,7 @@ export function ApiProvider({ children }) {
   const [refreshRate, setRefreshRate] = useState(1000)
   const pollInterval = useRef(null)
 
-  // Get available ports on mount
+  
   useEffect(() => {
     const fetchPorts = async () => {
       try {
@@ -23,7 +23,7 @@ export function ApiProvider({ children }) {
     }
 
     fetchPorts()
-    // You could also set up a periodic check for ports here if needed
+    
   }, [])
 
   const connect = async (port) => {

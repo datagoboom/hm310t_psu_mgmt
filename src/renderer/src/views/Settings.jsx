@@ -1,5 +1,5 @@
-// will be the settings view for the PSU management system
-// it will display the current settings for the PSU and allow for configuration
+
+
 
 import { Box, Paper, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import { themeNames } from '../theme'
@@ -34,7 +34,7 @@ export default function Settings({ currentTheme, onThemeChange }) {
         </FormControl>
       </Paper>
       
-      {/* Add other settings sections here */}
+      
     </Box>
   )
 }

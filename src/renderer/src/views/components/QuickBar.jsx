@@ -1,5 +1,5 @@
-// quick bar at the top of the dashboard view
-// will be used for setting voltage & current
+
+
 
 import { Box, IconButton, TextField, Tooltip, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew'
@@ -50,7 +50,7 @@ export default function QuickBar({ children }) {
       borderBottom: 1,
       borderColor: 'divider'
     }}>
-      {/* Left side - serial port selection */}
+      
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel id="port-select-label">Serial Port</InputLabel>
@@ -75,7 +75,7 @@ export default function QuickBar({ children }) {
         {children}
       </Box>
 
-      {/* Spacer */}
+      
       <Box sx={{ flex: 1 }} />
 
     </Box>

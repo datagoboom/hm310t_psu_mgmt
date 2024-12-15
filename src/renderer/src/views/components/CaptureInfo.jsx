@@ -20,7 +20,7 @@ export default function CaptureInfo({
 
   const calculateStats = () => {
     if (!measurements?.length) return { samples: 0, rate: 0 }
-    const duration = (new Date().getTime() - startTime) / 1000 // in seconds
+    const duration = (new Date().getTime() - startTime) / 1000 
     return {
       samples: measurements.length,
       rate: (measurements.length / duration).toFixed(1)

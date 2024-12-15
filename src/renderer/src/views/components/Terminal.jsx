@@ -3,7 +3,7 @@ import { useTheme } from '@mui/material/styles'
 import { useEffect, useRef } from 'react'
 
 const translateResponse = (response) => {
-  // Remove any spaces and get clean hex string
+  
   const hex = response.replace(/Response: /, '').replace(/\s+/g, '')
   
   if (!hex || hex === 'Nodata') return null
@@ -11,7 +11,7 @@ const translateResponse = (response) => {
   try {
     const bytes = hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
     
-    // Check if it's a valid Modbus response (at least 5 bytes: addr, func, len/data, crc)
+    
     if (bytes.length < 5) return null
 
     const address = bytes[0]
@@ -24,7 +24,7 @@ const translateResponse = (response) => {
     }
 
     switch (functionCode) {
-      case 0x03: // Read registers
+      case 0x03: 
         translation.type = 'Read Response'
         translation.byteCount = bytes[2]
         translation.values = []
@@ -33,22 +33,22 @@ const translateResponse = (response) => {
           translation.values.push(value)
         }
         
-        // Add register-specific translations
+        
         const register = (bytes[2] << 8) | bytes[3]
         switch (register) {
-          case 0x0010: // Voltage reading
+          case 0x0010: 
             translation.description = `Voltage: ${(translation.values[0] / 100).toFixed(2)}V`
             break
-          case 0x0011: // Current reading
+          case 0x0011: 
             translation.description = `Current: ${(translation.values[0] / 1000).toFixed(3)}A`
             break
-          case 0x0012: // Power reading
+          case 0x0012: 
             translation.description = `Power: ${(translation.values[0] / 10).toFixed(1)}W`
             break
         }
         break
 
-      case 0x06: // Write single register
+      case 0x06: 
         translation.type = 'Write Response'
         translation.register = (bytes[2] << 8) | bytes[3]
         translation.value = (bytes[4] << 8) | bytes[5]

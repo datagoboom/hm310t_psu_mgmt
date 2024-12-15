@@ -92,7 +92,7 @@ export default function CommandPalette({ onCommand }) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {/* Quick Reference */}
+      
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle2" color="text.secondary">
           Quick Reference:
@@ -112,7 +112,7 @@ export default function CommandPalette({ onCommand }) {
         </Typography>
       </Box>
 
-      {/* Set Values */}
+      
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
         <TextField
           label="Voltage"
@@ -169,7 +169,7 @@ export default function CommandPalette({ onCommand }) {
         </Button>
       </Box>
 
-      {/* Command Groups */}
+      
       {Object.entries(COMMAND_GROUPS).map(([group, commands]) => (
         <Box key={group}>
           <Typography variant="subtitle1" gutterBottom>

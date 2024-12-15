@@ -1,4 +1,4 @@
-// psu.js
+
 const { SerialPort } = require('serialport');
 const { Buffer } = require('buffer');
 
@@ -17,7 +17,7 @@ export class PowerSupplyController {
     this.port = null;
     this.connected = false;
     this.lastError = null;
-    this.slaveAddress = 1; // Default Modbus address
+    this.slaveAddress = 1; 
     this.debug = false;
     this.lastResponse = null;
   }
@@ -50,11 +50,11 @@ export class PowerSupplyController {
   }
 
   createModbusFrame(functionCode, address, data) {
-    let length = 4; // Slave address (1) + Function code (1) + CRC (2)
+    let length = 4; 
     if (functionCode === 0x03) {
-      length += 4; // Starting address (2) + Number of registers (2)
+      length += 4; 
     } else if (functionCode === 0x06) {
-      length += 4; // Register address (2) + Value (2)
+      length += 4; 
     }
 
     const frame = Buffer.alloc(length);
@@ -127,7 +127,7 @@ export class PowerSupplyController {
     }
 
     return new Promise((resolve, reject) => {
-      // Wait for 3.5 char time (approximately 4ms at 9600 baud)
+      
       setTimeout(() => {
         this.port.write(frame, (writeErr) => {
           if (writeErr) {
@@ -141,7 +141,7 @@ export class PowerSupplyController {
             }
             this.lastResponse = data;
 
-            // Verify CRC
+            
             const receivedCrc = data.readUInt16LE(data.length - 2);
             const calculatedCrc = this.calculateCRC(data.slice(0, -2));
             
@@ -210,12 +210,12 @@ export class PowerSupplyController {
     }
 
     try {
-      // Read output state (Register 0x0001)
+      
       const outputResponse = await this.readRegister(0x0001);
       if (!outputResponse.success) throw new Error(outputResponse.error);
       const outputEnabled = outputResponse.values[0] === 1;
 
-      // Read protection status (Register 0x0002)
+      
       const protectionResponse = await this.readRegister(0x0002);
       if (!protectionResponse.success) throw new Error(protectionResponse.error);
       const protectionValue = protectionResponse.values[0];
@@ -227,17 +227,17 @@ export class PowerSupplyController {
         SCP: !!(protectionValue & 0x10)
       };
 
-      // Read voltage (Register 0x0010)
+      
       const voltageResponse = await this.readRegister(0x0010);
       if (!voltageResponse.success) throw new Error(voltageResponse.error);
       const voltage = voltageResponse.values[0] / 100.0;
 
-      // Read current (Register 0x0011)
+      
       const currentResponse = await this.readRegister(0x0011);
       if (!currentResponse.success) throw new Error(currentResponse.error);
       const current = currentResponse.values[0] / 1000.0;
 
-      // Read power (Registers 0x0012-0x0013)
+      
       const powerResponse = await this.readRegister(0x0012, 2);
       if (!powerResponse.success) throw new Error(powerResponse.error);
       const powerHigh = powerResponse.values[0];
@@ -352,7 +352,7 @@ export class PowerSupplyController {
         regulationMode: await port.getRegulationMode()
       };
 
-      // Calculate power
+      
       status.power = status.voltage * status.current;
 
       return { success: true, ...status };

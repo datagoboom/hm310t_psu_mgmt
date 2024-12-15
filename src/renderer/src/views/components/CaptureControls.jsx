@@ -1,4 +1,4 @@
-// src/renderer/src/views/components/CaptureControls.jsx
+
 import { Box, IconButton, Tooltip } from '@mui/material'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -29,7 +29,7 @@ export default function CaptureControls({
 
   return (
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-      {/* Playback controls */}
+      
       <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
         {!isCapturing || isPaused ? (
           <Tooltip title="Start Capture (Space)">
@@ -78,7 +78,7 @@ export default function CaptureControls({
       </Box>
 
 
-      {/* Data management controls */}
+      
       <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
         <Tooltip title="Export to CSV (E)">
           <span>

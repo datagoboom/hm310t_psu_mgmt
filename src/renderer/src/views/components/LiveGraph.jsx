@@ -1,42 +1,42 @@
-// reusable component for live graphs
-// will be used in the Dashboard view
+
+
 
 import { useRef, useMemo, useState } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, CircularProgress } from '@mui/material'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { useTheme } from '@mui/material/styles'
 import GraphControls from './GraphControls'
 
-// Map dataKey to a consistent color index
+
 const colorIndices = {
   voltage: 0,
   current: 1,
   power: 2
 }
 
-export default function LiveGraph({ title, unit, dataKey, data }) {
+export default function LiveGraph({ title, unit, dataKey, data, isCapturing }) {
   const containerRef = useRef(null)
   const theme = useTheme()
   const [graphType, setGraphType] = useState('line')
-  const [timeRange, setTimeRange] = useState(300000) // Default to 5 minutes
+  const [timeRange, setTimeRange] = useState(300000) 
 
-  // Filter data based on time range
+  
   const filteredData = useMemo(() => {
     if (!data || data.length === 0) return []
     const cutoffTime = Date.now() - timeRange
     return data.filter(d => d.timestamp >= cutoffTime)
   }, [data, timeRange])
 
-  // Get theme colors for the graph
+  
   const colors = useMemo(() => ({
-    primary: theme.graphs[colorIndices[dataKey]], // Use specific color for each graph
+    primary: theme.graphs[colorIndices[dataKey]], 
     secondary: theme.palette.secondary.main,
     background: theme.palette.background.paper,
     text: theme.palette.text.primary,
     grid: theme.palette.divider
   }), [theme, dataKey])
 
-  // Calculate domain based on current data with minimum range
+  
   const yDomain = useMemo(() => {
     if (!data || data.length === 0) return [0, 1]
     
@@ -46,33 +46,33 @@ export default function LiveGraph({ title, unit, dataKey, data }) {
     const min = Math.min(...values)
     const max = Math.max(...values)
     
-    // If all values are the same, create a reasonable range around the value
+    
     if (min === max) {
       const value = min
       const variance = Math.max(
-        // At least 10% of the value, but never less than:
-        // 0.001 for small values (like current)
-        // 0.1 for medium values (like voltage)
-        // 1.0 for large values (like power)
+        
+        
+        
+        
         value === 0 ? 0.1 : value * 0.1,
         value < 0.1 ? 0.001 : value < 10 ? 0.1 : 1.0
       )
       
       return [
-        Math.max(0, value - variance), // Don't go below 0
+        Math.max(0, value - variance), 
         value + variance
       ]
     }
     
-    // Normal case: different min/max values
+    
     const range = max - min
     const padding = Math.max(
-      range * 0.1, // At least 10% of the range
-      min < 0.1 ? 0.001 : min < 10 ? 0.1 : 1.0 // Minimum padding based on value magnitude
+      range * 0.1, 
+      min < 0.1 ? 0.001 : min < 10 ? 0.1 : 1.0 
     )
     
     return [
-      Math.max(0, min - padding), // Don't go below 0
+      Math.max(0, min - padding), 
       max + padding
     ]
   }, [data, dataKey])
@@ -124,7 +124,7 @@ export default function LiveGraph({ title, unit, dataKey, data }) {
           </BarChart>
         )
       
-      default: // 'line', 'monotone', or 'stepAfter'
+      default: 
         return (
           <LineChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
@@ -161,6 +161,9 @@ export default function LiveGraph({ title, unit, dataKey, data }) {
     }
   }
 
+  
+  const showLoading = isCapturing && (!data || data.length === 0)
+
   return (
     <Box ref={containerRef} sx={{ width: '100%', height: '100%', p: 1 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
@@ -172,10 +175,30 @@ export default function LiveGraph({ title, unit, dataKey, data }) {
           onTimeRangeChange={setTimeRange}
         />
       </Box>
-      <Box sx={{ width: '100%', height: 'calc(100% - 50px)' }}>
-        <ResponsiveContainer width="100%" height="100%">
-          {renderChart(filteredData)}
-        </ResponsiveContainer>
+      <Box sx={{ 
+        width: '100%', 
+        height: 'calc(100% - 50px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {showLoading ? (
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            gap: 2
+          }}>
+            <CircularProgress />
+            <Typography variant="body2" color="text.secondary">
+              Waiting for data...
+            </Typography>
+          </Box>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            {renderChart(filteredData)}
+          </ResponsiveContainer>
+        )}
       </Box>
     </Box>
   )

@@ -8,11 +8,30 @@ import CaptureControls from './components/CaptureControls';
 import NavigationWarningModal from './components/NavigationWarningModal';
 import { useApi } from './contexts/ApiContext';
 import CaptureInfo from './components/CaptureInfo';
+import { useHistory } from './contexts/HistoryContext';
 
 export default function Dashboard({ currentTheme, onThemeChange }) {
   const navigate = useNavigate();
-  const { isConnected, getStatus, refreshRate, pollInterval } = useApi();
-  const [measurements, setMeasurements] = useState([]);
+  const { isConnected } = useApi();
+  const {
+    isCapturing,
+    isPaused,
+    measurements,
+    captureStartTime,
+    lastFetchTime,
+    refreshRate,
+    startCapture,
+    pauseCapture,
+    stopCapture,
+    clearCapture,
+    addMeasurements
+  } = useHistory();
+
+  
+  const [showNavigationWarning, setShowNavigationWarning] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+
+  
   const [currentState, setCurrentState] = useState({
     outputEnabled: false,
     protectionStatus: {
@@ -24,108 +43,74 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
     }
   });
 
-  // Capture state
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [showNavigationWarning, setShowNavigationWarning] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(null);
-  const [captureStartTime, setCaptureStartTime] = useState(null);
-
-  // Handle navigation attempts
-  const handleNavigationAttempt = (to) => {
-    if (isCapturing) {
-      setShowNavigationWarning(true);
-      setPendingNavigation(to);
-      return false;
-    }
-    return true;
-  };
-
-  // Handle navigation confirmation
-  const handleNavigationConfirm = () => {
-    handleStop();
-    setShowNavigationWarning(false);
-    if (pendingNavigation) {
-      navigate(pendingNavigation);
-    }
-  };
-
-  // Polling effect
+  
   useEffect(() => {
-    const startPolling = async () => {
-      if (!isConnected || !isCapturing || isPaused) return;
-
-      if (pollInterval.current) {
-        clearInterval(pollInterval.current);
-      }
-
-      const poll = async () => {
-        try {
-          const result = await getStatus();
-          if (result.success) {
-            const timestamp = Date.now();
-            
-            setMeasurements(prev => {
-              const newMeasurement = {
-                voltage: result.data.voltage,
-                current: result.data.current,
-                power: result.data.power,
-                timestamp
-              };
-              return [...prev, newMeasurement];
-            });
-
-            console.log(result.data)
-            setCurrentState({
-              outputEnabled: result.data.outputEnabled,
-              protectionStatus: result.data.protectionStatus
-            });
-          }
-        } catch (error) {
-          console.error('Polling error:', error);
-        }
+    if (isCapturing) {
+      const handleBeforeUnload = (e) => {
+        e.preventDefault();
+        e.returnValue = '';
       };
 
-      await poll();
-      pollInterval.current = setInterval(poll, refreshRate);
-    };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, [isCapturing]);
 
-    startPolling();
+  
+  const handleNavigationConfirm = async () => {
+    if (pendingNavigation && isCapturing) {
+      await stopCapture();
+      navigate(pendingNavigation);
+    }
+    setShowNavigationWarning(false);
+    setPendingNavigation(null);
+  };
 
-    return () => {
-      if (pollInterval.current) {
-        clearInterval(pollInterval.current);
-        pollInterval.current = null;
+  
+  useEffect(() => {
+    if (measurements.length > 0) {
+      const latestMeasurement = measurements[measurements.length - 1];
+      setCurrentState({
+        outputEnabled: latestMeasurement.output_enabled,
+        protectionStatus: {
+          OVP: latestMeasurement.ovp,
+          OCP: latestMeasurement.ocp,
+          OPP: latestMeasurement.opp,
+          OTP: latestMeasurement.otp,
+          SCP: latestMeasurement.scp
+        }
+      });
+    }
+  }, [measurements]);
+
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isCapturing) return;
+
+      try {
+        const result = await window.electron.ipcRenderer.invoke(
+          'capture:getData', 
+          lastFetchTime
+        );
+
+        if (result.success && result.data.length > 0) {
+          addMeasurements(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
     };
-  }, [isConnected, isCapturing, isPaused, refreshRate]);
 
-  // Capture controls
-  const handleStart = () => {
-    if (isPaused) {
-      setIsPaused(false);
-    } else {
-      setMeasurements([]);
-      setIsCapturing(true);
-      setCaptureStartTime(new Date().getTime());
-    }
-  };
-
-  const handlePause = () => {
-    setIsPaused(true);
-  };
-
-  const handleStop = () => {
-    setIsCapturing(false);
-    setIsPaused(false);
-    setCaptureStartTime(null);
-  };
+    const interval = setInterval(fetchData, 1000);
+    return () => clearInterval(interval);
+  }, [isCapturing, lastFetchTime]);
 
   const handleExport = () => {
     if (!measurements.length) return;
 
     const csvContent = [
-      // Header - expanded with all fields
+      
       [
         'Unix Timestamp (ms)', 
         'Time', 
@@ -139,19 +124,19 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
         'OTP',
         'SCP'
       ],
-      // Data rows - expanded with all fields
+      
       ...measurements.map(m => [
         m.timestamp,
         new Date(m.timestamp).toISOString(),
         m.voltage,
         m.current,
         m.power,
-        currentState.outputEnabled ? '1' : '0',
-        currentState.protectionStatus.OVP ? '1' : '0',
-        currentState.protectionStatus.OCP ? '1' : '0',
-        currentState.protectionStatus.OPP ? '1' : '0',
-        currentState.protectionStatus.OTP ? '1' : '0',
-        currentState.protectionStatus.SCP ? '1' : '0'
+        m.output_enabled ? '1' : '0',
+        m.ovp ? '1' : '0',
+        m.ocp ? '1' : '0',
+        m.opp ? '1' : '0',
+        m.otp ? '1' : '0',
+        m.scp ? '1' : '0'
       ])
     ]
       .map(row => row.join(','))
@@ -166,53 +151,6 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
     link.click();
     document.body.removeChild(link);
   };
-
-  // Add keyboard shortcut handler
-  const handleKeyPress = useCallback((event) => {
-    if (event.target.tagName === 'INPUT') return // Ignore if typing in an input
-
-    switch(event.key.toLowerCase()) {
-      case ' ': // Space bar
-        event.preventDefault()
-        if (!isCapturing) {
-          handleStart()
-        } else if (!isPaused) {
-          handlePause()
-        } else {
-          handleStart() // Resume
-        }
-        break
-      case 's':
-        if (isCapturing) {
-          event.preventDefault()
-          handleStop()
-        }
-        break
-      case 'e':
-        if (!isCapturing && measurements.length > 0) {
-          event.preventDefault()
-          handleExport()
-        }
-        break
-      case 'c':
-        if (!isCapturing && measurements.length > 0) {
-          event.preventDefault()
-          handleClear()
-        }
-        break
-    }
-  }, [isCapturing, isPaused, measurements.length])
-
-  // Add effect for keyboard shortcuts
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [handleKeyPress])
-
-  // Add clear handler
-  const handleClear = () => {
-    setMeasurements([])
-  }
 
   return (
     <Box sx={{ 
@@ -230,11 +168,11 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
         <CaptureControls
           isCapturing={isCapturing}
           isPaused={isPaused}
-          onStart={handleStart}
-          onPause={handlePause}
-          onStop={handleStop}
+          onStart={startCapture}
+          onPause={pauseCapture}
+          onStop={stopCapture}
           onExport={handleExport}
-          onClear={handleClear}
+          onClear={clearCapture}
           disabled={!isConnected}
           measurements={measurements}
         />
@@ -272,6 +210,7 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
               unit="V" 
               dataKey="voltage" 
               data={measurements}
+              isCapturing={isCapturing}
             />
           </Paper>
           <Paper sx={{ flex: 1, overflow: 'hidden' }}>
@@ -280,6 +219,7 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
               unit="A" 
               dataKey="current" 
               data={measurements}
+              isCapturing={isCapturing}
             />
           </Paper>
           <Paper sx={{ flex: 1, overflow: 'hidden' }}>
@@ -288,6 +228,7 @@ export default function Dashboard({ currentTheme, onThemeChange }) {
               unit="W" 
               dataKey="power" 
               data={measurements}
+              isCapturing={isCapturing}
             />
           </Paper>
         </Box>
