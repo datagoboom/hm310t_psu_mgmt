@@ -6,48 +6,36 @@ on:
       - 'release/*'
 
 jobs:
-  build:
-    name: Build All Platforms
-    runs-on: ubuntu-latest
-
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.12.0
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: |
-          npm run build
-          npm run build:win
-          npm run build:mac
-          npm run build:linux
-
-      - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-builds
-          path: |
-            dist/*.exe
-            dist/latest.yml
-
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
+      - run: npm ci
+      - run: npm run build:mac
+      - uses: actions/upload-artifact@v4
         with:
           name: macos-builds
           path: |
             dist/*.dmg
             dist/latest-mac.yml
 
-      - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build:linux
+      - uses: actions/upload-artifact@v4
         with:
           name: linux-builds
           path: |
@@ -55,8 +43,16 @@ jobs:
             dist/*.deb
             dist/latest-linux.yml
 
+  create-release:
+    needs: [build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/heads/release/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
       - name: Create Release
-        if: startsWith(github.ref, 'refs/heads/release/')
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,4 +60,4 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           draft: true
-          files: dist/*
+          files: artifacts/**/*
