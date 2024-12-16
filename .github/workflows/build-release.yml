@@ -6,89 +6,36 @@ on:
       - 'release/*'
 
 jobs:
-  build:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: macos-latest
-            arch: x64
-
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.12.0
           cache: 'npm'
-
-      - name: Setup Python (for node-gyp)
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          
-      - name: Install build essentials (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libudev-dev build-essential python3-distutils
-
-      - name: Install build tools (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          npm install --global windows-build-tools
-        shell: powershell
-        
-      - name: Install dependencies
-        run: |
-          python -m pip install setuptools
-          npm ci
-        env:
-          ELECTRON_ARCH: ${{ matrix.arch }}
-
-      - name: Build for Windows
-        if: matrix.os == 'windows-latest'
-        run: npm run build:win
-        env:
-          ELECTRON_ARCH: ${{ matrix.arch }}
-
-      - name: Build for macOS
-        if: matrix.os == 'macos-latest'
-        run: npm run build:mac
-        env:
-          ELECTRON_ARCH: ${{ matrix.arch }}
-
-      - name: Build for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: npm run build:linux
-        env:
-          ELECTRON_ARCH: ${{ matrix.arch }}
-
-      - name: Upload Windows artifacts
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-builds
-          path: |
-            dist/*.exe
-            dist/latest.yml
-
-      - name: Upload macOS artifacts
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
+      - run: npm ci
+      - run: npm run build:mac
+      - uses: actions/upload-artifact@v4
         with:
           name: macos-builds
           path: |
             dist/*.dmg
             dist/latest-mac.yml
 
-      - name: Upload Linux artifacts
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build:linux
+      - uses: actions/upload-artifact@v4
         with:
           name: linux-builds
           path: |
@@ -97,27 +44,20 @@ jobs:
             dist/latest-linux.yml
 
   create-release:
-    needs: build
+    needs: [build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/heads/release/')
-    
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: Get version from branch name
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_OUTPUT
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          name: Release v${{ steps.get_version.outputs.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: true
-          files: |
-            artifacts/**/*
+          files: artifacts/**/*
